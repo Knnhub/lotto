@@ -18,18 +18,20 @@ class _RegisterPageState extends State<RegisterPage> {
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController confirmpassword = TextEditingController();
+  TextEditingController nationalId =
+      TextEditingController(); // เพิ่มตัวแปรสำหรับเลขบัตรประชาชน
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ลงทะเบียนสมาชิกใหม่')),
+      appBar: AppBar(title: const Text('ลงทะเบียนซื้อขายลอตเตอรี่')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 20),
             child: Text(
-              "ชื่อ นามสกุล",
+              "ชื่อผู้ใช้งาน",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -85,7 +87,8 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.only(left: 16.0, top: 5, right: 16),
             child: TextField(
               controller: email,
-              keyboardType: TextInputType.numberWithOptions(),
+              keyboardType: TextInputType
+                  .emailAddress, // เปลี่ยนเป็น keyboardType สำหรับอีเมล
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderSide: BorderSide(width: 2)),
               ),
@@ -107,7 +110,8 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.only(left: 16.0, top: 5, right: 16),
             child: TextField(
               controller: password,
-              keyboardType: TextInputType.numberWithOptions(),
+              obscureText: true, // ทำให้รหัสผ่านเป็นตัวอักษรซ่อน
+              keyboardType: TextInputType.text,
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderSide: BorderSide(width: 2)),
               ),
@@ -129,7 +133,31 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.only(left: 16.0, top: 5, right: 16),
             child: TextField(
               controller: confirmpassword,
-              keyboardType: TextInputType.numberWithOptions(),
+              obscureText: true, // ทำให้รหัสผ่านเป็นตัวอักษรซ่อน
+              keyboardType: TextInputType.text,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+              ),
+            ),
+          ),
+
+          Padding(
+            // เพิ่มช่องสำหรับเลขบัตรประชาชน
+            padding: const EdgeInsets.only(left: 16, top: 10),
+            child: Text(
+              "หมายเลขประจำตัวประชาชน",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 5, right: 16),
+            child: TextField(
+              controller: nationalId,
+              keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderSide: BorderSide(width: 2)),
               ),

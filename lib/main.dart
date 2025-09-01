@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/pages/login.dart';
+import 'package:flutter_application_1/pages/home_page.dart'; // import ไฟล์ใหม่
 
 void main() {
   runApp(const MyApp());
@@ -8,16 +8,17 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Lotto App', // เปลี่ยนชื่อ title ให้เหมาะสม
       theme: ThemeData(
-       
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepOrange,
+        ), // เปลี่ยนสีหลักให้เข้ากับ Lotto
+        useMaterial3: true,
       ),
-      home:  LoginPage(),
+      home: const HomePage(), // เปลี่ยนหน้า home เป็น HomePage
     );
   }
 }

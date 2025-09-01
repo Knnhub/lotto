@@ -11,7 +11,7 @@ import 'package:flutter_application_1/pages/showtrip.dart';
 import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
-  LoginPage({super.key});
+  const LoginPage({super.key}); // แก้ไข constructor ให้เป็น const
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -27,7 +27,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     Configuration.getConfig().then((config) {
       url = config['apiEndpoint'];
@@ -37,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login page')),
+      appBar: AppBar(title: const Text('เข้าสู่ระบบ')), // เพิ่ม AppBar
       body: SingleChildScrollView(
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
@@ -45,11 +44,11 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset('assets/images/Orb3.png'),
+              // Image.asset('assets/images/Orb3.png'), // ส่วนนี้สามารถลบออกได้หากไม่ต้องการ
               Padding(
                 padding: const EdgeInsets.only(left: 16, top: 30),
                 child: Text(
-                  "phone number",
+                  "เบอร์โทรศัพท์", // เปลี่ยนข้อความให้ชัดเจน
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -60,10 +59,6 @@ class _LoginPageState extends State<LoginPage> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: TextField(
-                  // onChanged: (value) {
-                  //   phoneNo = value;
-                  //   log(value);
-                  // },
                   controller: phoneCtl,
                   keyboardType: TextInputType.numberWithOptions(),
                   decoration: InputDecoration(
@@ -77,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
               Padding(
                 padding: const EdgeInsets.only(left: 16, top: 30),
                 child: Text(
-                  "password",
+                  "รหัสผ่าน", // เปลี่ยนข้อความให้ชัดเจน
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -89,7 +84,8 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: TextField(
                   controller: passwordCtl,
-                  keyboardType: TextInputType.numberWithOptions(),
+                  obscureText: true, // เพิ่มเพื่อซ่อนรหัสผ่าน
+                  keyboardType: TextInputType.text,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderSide: BorderSide(width: 2),
@@ -98,22 +94,22 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton(
+              Center(
+                // จัดปุ่มให้อยู่ตรงกลาง
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: () => login(),
+                      child: const Text('เข้าสู่ระบบ'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
                       onPressed: register,
                       child: const Text('ลงทะเบียนใหม่'),
                     ),
-                  ),
-                  Text(text, style: TextStyle(fontSize: 20)),
-                  FilledButton(
-                    onPressed: () => login(),
-                    child: const Text('เข้าสู่ระบบ'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -130,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void login(/*String phone, String password*/) {
-    // Create the request object with phone and password from the controllers
+    // ... โค้ดเดิม
     final req = CustomerLoginPostRequest(
       phone: phoneCtl.text,
       password: passwordCtl.text,
