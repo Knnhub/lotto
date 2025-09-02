@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/login.dart';
 import 'package:flutter_application_1/pages/register.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -15,11 +16,13 @@ class HomePage extends StatelessWidget {
           children: [
             Text(
               "LOTTO",
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                fontFamily: 'PressStart2P',
+              style: GoogleFonts.jersey10(
+                //ฟ้อน 8 bit
+                textStyle: const TextStyle(
+                  fontSize: 100,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
             ),
             const SizedBox(height: 50),
@@ -29,12 +32,12 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white, // ตั้งค่าสีพื้นหลังเป็นสีขาว
-                  foregroundColor: Colors.black, // ตั้งค่าสีตัวอักษรเป็นสีดำ
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                 ),
                 child: const Text('เข้าสู่ระบบ'),
               ),
@@ -51,9 +54,10 @@ class HomePage extends StatelessWidget {
                     ),
                   );
                 },
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white, // ตั้งค่าสีพื้นหลังเป็นสีขาว
-                  foregroundColor: Colors.black, // ตั้งค่าสีตัวอักษรเป็นสีดำ
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  side: const BorderSide(color: Colors.black),
                 ),
                 child: const Text('ลงทะเบียน'),
               ),

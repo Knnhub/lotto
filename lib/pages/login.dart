@@ -9,21 +9,20 @@ import 'package:flutter_application_1/model/respone/customer_login_post_res.dart
 import 'package:flutter_application_1/pages/register.dart';
 import 'package:flutter_application_1/pages/showtrip.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key}); // แก้ไข constructor ให้เป็น const
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  String text = ' ';
-  int number = 0;
-  String phoneNo = '';
   var phoneCtl = TextEditingController();
   var passwordCtl = TextEditingController();
   String url = '';
+  bool _obscureText = true;
 
   @override
   void initState() {
@@ -36,82 +35,171 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('เข้าสู่ระบบ')), // เพิ่ม AppBar
+      backgroundColor: const Color(0xFFFCC737),
+      appBar: AppBar(
+        // เพิ่ม AppBar ที่นี่
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SingleChildScrollView(
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Image.asset('assets/images/Orb3.png'), // ส่วนนี้สามารถลบออกได้หากไม่ต้องการ
-              Padding(
-                padding: const EdgeInsets.only(left: 16, top: 30),
-                child: Text(
-                  "เบอร์โทรศัพท์", // เปลี่ยนข้อความให้ชัดเจน
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+        child: Column(
+          children: [
+            const SizedBox(height: 120),
+            Text(
+              "LOTTO",
+              style: GoogleFonts.jersey10(
+                textStyle: const TextStyle(
+                  fontSize: 128,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  height: 1,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  controller: phoneCtl,
-                  keyboardType: TextInputType.numberWithOptions(),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(width: 2),
-                    ),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 50),
+            Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.6,
               ),
-
-              Padding(
-                padding: const EdgeInsets.only(left: 16, top: 30),
-                child: Text(
-                  "รหัสผ่าน", // เปลี่ยนข้อความให้ชัดเจน
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  controller: passwordCtl,
-                  obscureText: true, // เพิ่มเพื่อซ่อนรหัสผ่าน
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(width: 2),
-                    ),
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 40,
                 ),
-              ),
-
-              Center(
-                // จัดปุ่มให้อยู่ตรงกลาง
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: () => login(),
-                      child: const Text('เข้าสู่ระบบ'),
+                    const Text(
+                      "LOGIN",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: register,
-                      child: const Text('ลงทะเบียนใหม่'),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: phoneCtl,
+                      labelText: "ชื่อผู้ใช้",
+                      icon: Icons.person,
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildPasswordField(
+                      controller: passwordCtl,
+                      labelText: "รหัสผ่าน",
+                    ),
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: FilledButton(
+                        onPressed: login,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFFCC737),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'เข้าสู่ระบบ',
+                          style: TextStyle(fontSize: 18, color: Colors.black),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("ยังไม่มีบัญชีใช่ไหม?"),
+                        TextButton(
+                          onPressed: register,
+                          child: const Text('ลงทะเบียน'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: Icon(icon, color: Colors.black54),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15,
+            horizontal: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String labelText,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: _obscureText,
+        keyboardType: TextInputType.text,
+        decoration: InputDecoration(
+          labelText: labelText,
+          prefixIcon: const Icon(Icons.lock, color: Colors.black54),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureText ? Icons.visibility_off : Icons.visibility,
+              color: Colors.black54,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureText = !_obscureText;
+              });
+            },
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15,
+            horizontal: 20,
           ),
         ),
       ),
@@ -125,31 +213,30 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void login(/*String phone, String password*/) {
-    // ... โค้ดเดิม
-    final req = CustomerLoginPostRequest(
-      phone: phoneCtl.text,
-      password: passwordCtl.text,
-    );
-    http
-        .post(
-          Uri.parse("$API_ENDPOINT/customers/login"),
-          headers: {"Content-Type": "application/json; charset=utf-8"},
-          body: customerLoginPostRequestToJson(req),
-        )
-        .then((value) {
-          log(value.body);
-          CustomerLoginPostResponse customerLoginPostResponse =
-              customerLoginPostResponseFromJson(value.body);
-          log(customerLoginPostResponse.customer.fullname);
-          log(customerLoginPostResponse.customer.email);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const Showtrippage()),
-          );
-        })
-        .catchError((error) {
-          log('Error $error');
-        });
+  void login() {
+    // final req = CustomerLoginPostRequest(
+    //   phone: phoneCtl.text,
+    //   password: passwordCtl.text,
+    // );
+    // http
+    //     .post(
+    //       Uri.parse("$API_ENDPOINT/customers/login"),
+    //       headers: {"Content-Type": "application/json; charset=utf-8"},
+    //       body: customerLoginPostRequestToJson(req),
+    //     )
+    //     .then((value) {
+    //       log(value.body);
+    //       CustomerLoginPostResponse customerLoginPostResponse =
+    //           customerLoginPostResponseFromJson(value.body);
+    //       log(customerLoginPostResponse.customer.fullname);
+    //       log(customerLoginPostResponse.customer.email);
+    //       Navigator.push(
+    //         context,
+    //         MaterialPageRoute(builder: (context) => const Showtrippage()),
+    //       );
+    //     })
+    //     .catchError((error) {
+    //       log('Error $error');
+    //     });
   }
 }
