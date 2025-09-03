@@ -1,184 +1,169 @@
 import 'package:flutter/material.dart';
 
-// เปลี่ยน LotteryScreen ให้เป็น StatefulWidget เพื่อจัดการสถานะการเลือกหน้า
-class Profile extends StatefulWidget {
-  const Profile({super.key});
-
-  @override
-  State<Profile> createState() => _LotteryScreenState();
-}
-
-class _LotteryScreenState extends State<Profile> {
-  // สถานะปัจจุบันของ bottom navigation bar
-  int _selectedIndex = 0;
-
-  // รายการหน้าจอที่สามารถสลับไปมาได้
-  static const List<Widget> _pages = <Widget>[
-    _LotteryBody(), // หน้าหลัก Lottery
-    ProfileScreen(), // หน้า Profile
-    Center(child: Text('Shop Page', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Basket Page', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Logout Page', style: TextStyle(fontSize: 24))),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // สามารถเพิ่ม logic สำหรับปุ่มอื่นๆ ได้ที่นี่
-    // ตัวอย่างเช่น สำหรับปุ่ม Logout
-    if (index == 4) {
-      // Logic สำหรับการออกจากระบบ
-      Navigator.pop(context);
-    }
-  }
+class Profile extends StatelessWidget {
+  const Profile({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFCC737),
-      body: _pages[_selectedIndex], // แสดงหน้าจอตามสถานะปัจจุบัน
-      // เพิ่ม BottomNavigationBar ที่นี่
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // ทำให้ทุก item แสดงผล
-        backgroundColor: const Color(0xFFFCC737),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: "Shop",
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(primarySwatch: Colors.amber),
+      // กำหนดให้หน้า MainScreen เป็นหน้าแรก
+      home: const MainScreen(),
+    );
+  }
+}
+
+// --- Widget หลักสำหรับแสดงหน้า Profile ---
+class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  // ไม่ต้องมี _selectedIndex เพราะมีหน้าเดียวแล้ว
+  double _walletBalance = 1000.0;
+
+  // ฟังก์ชันแสดง Pop-up Top-up Wallet
+  void _showTopUpDialog() {
+    TextEditingController amountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_basket),
-            label: "Basket",
+          elevation: 0.0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(16.0),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10.0,
+                  offset: Offset(0.0, 10.0),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.amber,
+                  child: Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+                const Text(
+                  'Top Up Wallet',
+                  style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16.0),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter amount',
+                    labelText: 'Amount (Baht)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: const BorderSide(
+                        color: Colors.amber,
+                        width: 2.0,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        double amount =
+                            double.tryParse(amountController.text) ?? 0.0;
+                        if (amount > 0) {
+                          setState(() => _walletBalance += amount);
+                        }
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      child: const Text(
+                        'Confirm',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.logout), label: "Logout"),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        );
+      },
+    );
+  }
+
+  // ฟังก์ชันสร้างรายการเมนู
+  Widget _buildMenuItem(IconData icon, String text, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.amber[800]),
+      title: Text(text),
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: Colors.grey,
       ),
+      onTap: onTap,
     );
   }
-}
 
-// Widget สำหรับส่วนแสดงผล Lottery (ถูกแยกออกมาเพื่อให้สามารถใช้ใน _pages ได้)
-class _LotteryBody extends StatelessWidget {
-  const _LotteryBody({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // พื้นหลังสีขาวสำหรับข้อมูลด้านบน
-        Positioned(
-          left: 38,
-          top: 42,
-          child: Container(
-            width: 323,
-            height: 242,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-
-        // ข้อความ "งวดวันที่ 1 สิงหาคม 2568"
-        Positioned(
-          left: 113,
-          top: 126,
-          child: Text(
-            "งวดวันที่ 1 สิงหาคม 2568",
-            style: TextStyle(
-              fontSize: 17,
-              color: Color(0xFFFCC737),
-              fontFamily: "Roboto",
-            ),
-          ),
-        ),
-
-        // ข้อความ "ตรวจผลสลาก"
-        Positioned(
-          left: 110,
-          top: 77,
-          child: Text(
-            "ตรวจผลสลาก",
-            style: TextStyle(
-              fontSize: 32,
-              color: Colors.black,
-              letterSpacing: 0.02,
-              fontFamily: "Roboto",
-            ),
-          ),
-        ),
-
-        // ปุ่ม "ตรวจสลากของคุณ"
-        Positioned(
-          left: 78,
-          top: 223,
-          child: Container(
-            width: 250,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Color(0xFFFCC737),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              "ตรวจสลากของคุณ",
-              style: TextStyle(
-                fontSize: 17,
-                color: Color(0xFFF0FFFF),
-                fontFamily: "Roboto",
-              ),
-            ),
-          ),
-        ),
-
-        // พื้นหลังสีขาวด้านล่าง
-        Positioned(
-          top: 341,
-          child: Container(
-            width: 411,
-            height: 600,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(50),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// --- หน้า Profile (โค้ดที่ปรับปรุงแล้ว) ---
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  // สร้างหน้า Profile
+  Widget _buildProfileScreen() {
     return Scaffold(
       body: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // Section 1: Profile Header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 60, 16, 32),
             color: Colors.amber,
-            child: Column(
+            child: const Column(
               children: <Widget>[
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 60,
                   backgroundImage: NetworkImage(
-                    'https://i.pinimg.com/736x/87/d8/00/87d800a935c24e2d35a39537a77e23f0.jpg',
+                    'https://www.jokesforfunny.com/wp-content/uploads/2021/06/0596bdb89b60fe771acd2f5972a9d3e3-1158x1536.jpg',
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'Mr. BOB EIEI',
                   style: TextStyle(
                     fontSize: 24,
@@ -189,14 +174,11 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-
-          // Section 2: Menu List (ปรับปรุงส่วนนี้)
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // New Contact Section
                 const Text(
                   'Contact Info',
                   style: TextStyle(
@@ -213,23 +195,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      ProfileMenuItem(
-                        icon: Icons.email,
-                        text: 'bobbob@gmail.com',
-                        onTap: () {},
-                      ),
-                      // Add a new item for phone number
-                      ProfileMenuItem(
-                        icon: Icons.phone,
-                        text: '+66 81-234-5678',
-                        onTap: () {},
-                      ),
+                      _buildMenuItem(Icons.email, 'bobbob@gmail.com', () {}),
+                      _buildMenuItem(Icons.phone, '+66 81-234-5678', () {}),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Existing Account Section
                 const Text(
                   'Account',
                   style: TextStyle(
@@ -246,16 +217,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      ProfileMenuItem(
-                        icon: Icons.credit_card,
-                        text: 'Wallet: 1000 u.',
-                        onTap: () {},
+                      _buildMenuItem(
+                        Icons.credit_card,
+                        'Wallet: ${_walletBalance.toStringAsFixed(2)} บ.',
+                        _showTopUpDialog,
                       ),
-                      ProfileMenuItem(
-                        icon: Icons.history,
-                        text: 'My Lottery',
-                        onTap: () {},
-                      ),
+                      _buildMenuItem(Icons.history, 'My Lottery', () {}),
                     ],
                   ),
                 ),
@@ -267,32 +234,10 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-// Custom Widget for Menu Items (ไม่มีการเปลี่ยนแปลง)
-class ProfileMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback onTap;
-
-  const ProfileMenuItem({
-    Key? key,
-    required this.icon,
-    required this.text,
-    required this.onTap,
-  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.amber[800]),
-      title: Text(text),
-      trailing: const Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: Colors.grey,
-      ),
-      onTap: onTap,
-    );
+    // แสดงหน้า Profile เป็นหน้าหลักแทนการใช้ BottomNavigationBar
+    return _buildProfileScreen();
   }
 }

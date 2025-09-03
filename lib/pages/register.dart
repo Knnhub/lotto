@@ -213,6 +213,10 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void register() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
     // ต้องแก้ไข logic การลงทะเบียนให้ถูกต้องตาม API ของคุณ
     // ตัวอย่างการสร้าง CustomerRegisterPostRequest
     // โดยสมมติว่าคุณมี model/register/customer_register_post_req.dart และฟังก์ชัน customerRegisterPostResponseToJson
