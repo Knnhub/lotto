@@ -6,6 +6,7 @@ import 'package:flutter_application_1/config/config.dart';
 import 'package:flutter_application_1/config/internal_config.dart';
 import 'package:flutter_application_1/model/request/customer_login_post_req.dart';
 import 'package:flutter_application_1/model/respone/customer_login_post_res.dart';
+import 'package:flutter_application_1/pages/lotteryScreen.dart';
 import 'package:flutter_application_1/pages/register.dart';
 import 'package:flutter_application_1/pages/showtrip.dart';
 import 'package:http/http.dart' as http;
@@ -214,6 +215,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void login() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LotteryScreen()),
+    );
+    //รอแก้เป็น API จริง
     // final req = CustomerLoginPostRequest(
     //   phone: phoneCtl.text,
     //   password: passwordCtl.text,

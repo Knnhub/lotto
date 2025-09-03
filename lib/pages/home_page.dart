@@ -45,7 +45,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 20),
             SizedBox(
               width: 200,
-              child: OutlinedButton(
+              child: FilledButton(
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -54,10 +54,9 @@ class HomePage extends StatelessWidget {
                     ),
                   );
                 },
-                style: OutlinedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black),
                 ),
                 child: const Text('ลงทะเบียน'),
               ),

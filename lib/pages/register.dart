@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/model/register/customer_register_post_req.dart';
 import 'package:flutter_application_1/model/request/customer_login_post_req.dart';
+import 'package:flutter_application_1/pages/lotteryScreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'package:flutter_application_1/pages/login.dart'; // Import LoginPage for navigation
@@ -243,6 +244,6 @@ class _RegisterPageState extends State<RegisterPage> {
     */
 
     // สำหรับตอนนี้แค่กลับไปหน้า Login เพื่อให้ UI ทำงานได้
-    Navigator.pop(context);
+    // Navigator.pop(context);
   }
 }
