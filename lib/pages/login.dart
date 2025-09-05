@@ -8,7 +8,7 @@ import 'package:flutter_application_1/model/request/customer_login_post_req.dart
 import 'package:flutter_application_1/model/respone/customer_login_post_res.dart';
 import 'package:flutter_application_1/pages/lotteryScreen.dart';
 import 'package:flutter_application_1/pages/register.dart';
-import 'package:flutter_application_1/pages/showtrip.dart';
+import 'package:flutter_application_1/pages/shop.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 
