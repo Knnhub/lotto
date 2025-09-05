@@ -1,41 +1,59 @@
 package main
 
 import (
-    "database/sql"
-    "fmt"
-    _ "github.com/go-sql-driver/mysql"
+	"database/sql"
+	"encoding/json"
+	"log"
+	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
+// สร้าง struct ของ user
+type User struct {
+	UID      int     json:"uid"
+	FullName string  json:"full_name"
+	Email    string  json:"email"
+	Phone    string  json:"phone"
+	Role     string  json:"role"
+	Money    float64 json:"money"
+}
+
 func main() {
-    // ข้อมูล MySQL
-    username := "mb68_66011212250"
-    password := "&WH74jVmJE6b"
-    host := "202.28.34.203"
-    port := "3306"       // port MySQL จริง ไม่ใช่ 8306 ของ phpMyAdmin
-    dbname := "mb68_66011212250"   // ชื่อ database ของคุณ
+	// เชื่อมต่อ MySQL
+	dsn := "mb68_66011212250:&WH74jVmJE6b@tcp(202.28.34.203:3306)/mb68_66011212250"
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
 
-    // สร้าง DSN
-    dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname)
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
 
-    // เปิดการเชื่อมต่อ
-    db, err := sql.Open("mysql", dsn)
-    if err != nil {
-        panic(err)
-    }
-    defer db.Close()
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		rows, err := db.Query("SELECT uid, full_name, email, phone, role, money FROM user")
+		if err != nil {
+			http.Error(w, "Query error", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
 
-    // ทดสอบ ping
-    if err := db.Ping(); err != nil {
-        panic(err)
-    }
+		var users []User
+		for rows.Next() {
+			var u User
+			if err := rows.Scan(&u.UID, &u.FullName, &u.Email, &u.Phone, &u.Role, &u.Money); err != nil {
+				http.Error(w, "Scan error", http.StatusInternalServerError)
+				return
+			}
+			users = append(users, u)
+		}
 
-    fmt.Println("Connected to MySQL successfully!")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(users)
+	})
 
-    // ตัวอย่าง query
-    var now string
-    err = db.QueryRow("SELECT NOW()").Scan(&now)
-    if err != nil {
-        panic(err)
-    }
-    fmt.Println("Current time from DB:", now)
+	log.Println("Server running at http://localhost:8080/user")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

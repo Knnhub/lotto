@@ -11,34 +11,38 @@ String customerRegisterPostResponseToJson(CustomerRegisterPostResponse data) =>
     json.encode(data.toJson());
 
 class CustomerRegisterPostResponse {
-  String fullname;
-  String phone;
+  int uid;
+  String fullName;
   String email;
-  String image;
-  String password;
+  String phone;
+  String role;
+  int money;
 
   CustomerRegisterPostResponse({
-    required this.fullname,
-    required this.phone,
+    required this.uid,
+    required this.fullName,
     required this.email,
-    required this.image,
-    required this.password,
+    required this.phone,
+    required this.role,
+    required this.money,
   });
 
   factory CustomerRegisterPostResponse.fromJson(Map<String, dynamic> json) =>
       CustomerRegisterPostResponse(
-        fullname: json["fullname"],
-        phone: json["phone"],
+        uid: json["uid"],
+        fullName: json["full_name"],
         email: json["email"],
-        image: json["image"],
-        password: json["password"],
+        phone: json["phone"],
+        role: json["role"],
+        money: json["money"],
       );
 
   Map<String, dynamic> toJson() => {
-    "fullname": fullname,
-    "phone": phone,
+    "uid": uid,
+    "full_name": fullName,
     "email": email,
-    "image": image,
-    "password": password,
+    "phone": phone,
+    "role": role,
+    "money": money,
   };
 }

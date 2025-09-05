@@ -1,16 +1,12 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/config/config.dart';
-import 'package:flutter_application_1/config/internal_config.dart';
-import 'package:flutter_application_1/model/request/customer_login_post_req.dart';
-import 'package:flutter_application_1/model/respone/customer_login_post_res.dart';
+import 'package:flutter_application_1/config/config.dart'; // อ่าน apiEndpoint จาก assets/config/config.json
+import 'package:flutter_application_1/pages/admin_ran_num.dart';
 import 'package:flutter_application_1/pages/lotteryScreen.dart';
-import 'package:flutter_application_1/pages/register.dart';
-import 'package:flutter_application_1/pages/shop.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_application_1/pages/shop.dart'; // LotteryPage อยู่ในไฟล์นี้ตามโปรเจ็กต์เดิม
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,17 +16,29 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  var phoneCtl = TextEditingController();
-  var passwordCtl = TextEditingController();
-  String url = '';
-  bool _obscureText = true;
+  final phoneCtl = TextEditingController();
+  final passwordCtl = TextEditingController();
+
+  String _baseUrl = ''; // จาก config.json -> apiEndpoint
+  bool _obscureText = true; // ซ่อน/โชว์รหัสผ่าน
+  bool _loading = false; // สถานะปุ่มตอนกำลังเรียก API
 
   @override
   void initState() {
     super.initState();
-    Configuration.getConfig().then((config) {
-      url = config['apiEndpoint'];
+    // โหลดค่า API endpoint จาก assets
+    Configuration.getConfig().then((cfg) {
+      setState(() {
+        _baseUrl = (cfg['apiEndpoint'] ?? '').toString();
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    phoneCtl.dispose();
+    passwordCtl.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFCC737),
       appBar: AppBar(
-        // เพิ่ม AppBar ที่นี่
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -89,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 20),
                     _buildTextField(
                       controller: phoneCtl,
-                      labelText: "ชื่อผู้ใช้",
+                      labelText: "เบอร์โทร / ชื่อผู้ใช้",
                       icon: Icons.person,
                       keyboardType: TextInputType.text,
                     ),
@@ -103,17 +110,31 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       height: 50,
                       child: FilledButton(
-                        onPressed: login,
+                        onPressed: _loading
+                            ? null
+                            : _login, // disable ระหว่างโหลด
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFFCC737),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: const Text(
-                          'เข้าสู่ระบบ',
-                          style: TextStyle(fontSize: 18, color: Colors.black),
-                        ),
+                        child: _loading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : const Text(
+                                'เข้าสู่ระบบ',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -122,11 +143,17 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const Text("ยังไม่มีบัญชีใช่ไหม?"),
                         TextButton(
-                          onPressed: register,
+                          onPressed: _register,
                           child: const Text('ลงทะเบียน'),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    if (_baseUrl.isEmpty)
+                      const Text(
+                        "กำลังโหลดการตั้งค่าเซิร์ฟเวอร์...",
+                        style: TextStyle(color: Colors.grey),
+                      ),
                   ],
                 ),
               ),
@@ -188,11 +215,7 @@ class _LoginPageState extends State<LoginPage> {
               _obscureText ? Icons.visibility_off : Icons.visibility,
               color: Colors.black54,
             ),
-            onPressed: () {
-              setState(() {
-                _obscureText = !_obscureText;
-              });
-            },
+            onPressed: () => setState(() => _obscureText = !_obscureText),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -207,42 +230,82 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void register() {
-    Navigator.push(
+  void _register() {
+    // TODO: ไปหน้า RegisterPage เมื่อพร้อม
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage()));
+    ScaffoldMessenger.of(
       context,
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
-    );
+    ).showSnackBar(const SnackBar(content: Text('เดี๋ยวค่อยต่อ Register นะ')));
   }
 
-  void login() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const LotteryScreen()),
-    );
-    //รอแก้เป็น API จริง
-    // final req = CustomerLoginPostRequest(
-    //   phone: phoneCtl.text,
-    //   password: passwordCtl.text,
-    // );
-    // http
-    //     .post(
-    //       Uri.parse("$API_ENDPOINT/customers/login"),
-    //       headers: {"Content-Type": "application/json; charset=utf-8"},
-    //       body: customerLoginPostRequestToJson(req),
-    //     )
-    //     .then((value) {
-    //       log(value.body);
-    //       CustomerLoginPostResponse customerLoginPostResponse =
-    //           customerLoginPostResponseFromJson(value.body);
-    //       log(customerLoginPostResponse.customer.fullname);
-    //       log(customerLoginPostResponse.customer.email);
-    //       Navigator.push(
-    //         context,
-    //         MaterialPageRoute(builder: (context) => const Showtrippage()),
-    //       );
-    //     })
-    //     .catchError((error) {
-    //       log('Error $error');
-    //     });
+  Future<void> _login() async {
+    final phone = phoneCtl.text.trim();
+    final password = passwordCtl.text;
+
+    if (phone.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรอกเบอร์/ชื่อผู้ใช้ และรหัสผ่านให้ครบ')),
+      );
+      return;
+    }
+    if (_baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ยังอ่านค่าเซิร์ฟเวอร์ไม่เสร็จ ลองอีกครั้ง'),
+        ),
+      );
+      return;
+    }
+
+    final base = _baseUrl.endsWith('/')
+        ? _baseUrl.substring(0, _baseUrl.length - 1)
+        : _baseUrl;
+    final uri = Uri.parse('$base/login');
+
+    setState(() => _loading = true);
+    try {
+      final res = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phone': phone, 'password': password}),
+      );
+
+      final body = res.body.isEmpty ? {} : jsonDecode(res.body);
+
+      if (res.statusCode == 200) {
+        // ดึง role จาก response
+        final user = body['user'] ?? {};
+        final role = user['role'] ?? 'user';
+
+        if (!mounted) return;
+
+        if (role == 'ADMIN') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminRanNum()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LotteryScreen()),
+          );
+        }
+      } else {
+        final msg = (body is Map && body['error'] is String)
+            ? body['error'] as String
+            : 'เข้าสู่ระบบไม่สำเร็จ (${res.statusCode})';
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ผิดพลาด: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }

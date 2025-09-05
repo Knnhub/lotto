@@ -1,3 +1,6 @@
 {
-    "apiEndpoint": "http://192.168.82.175:3000"
+  "apiEndpoint": "http://10.0.2.2:8080/api",
+  "defaultHeaders": {
+    "Content-Type": "application/json"
+  }
 }
