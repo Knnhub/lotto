@@ -1,12 +1,13 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/config/config.dart'; // อ่าน apiEndpoint จาก assets/config/config.json
 import 'package:flutter_application_1/pages/admin_ran_num.dart';
 import 'package:flutter_application_1/pages/lotteryScreen.dart';
+import 'package:flutter_application_1/pages/register.dart';
 import 'package:flutter_application_1/pages/shop.dart'; // LotteryPage อยู่ในไฟล์นี้ตามโปรเจ็กต์เดิม
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_application_1/pages/random_lotto.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,14 +46,14 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFCC737),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back, color: Colors.black),
+      //     onPressed: () => Navigator.of(context).pop(),
+      //   ),
+      // ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -233,9 +234,13 @@ class _LoginPageState extends State<LoginPage> {
   void _register() {
     // TODO: ไปหน้า RegisterPage เมื่อพร้อม
     // Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage()));
-    ScaffoldMessenger.of(
+    Navigator.push(
       context,
-    ).showSnackBar(const SnackBar(content: Text('เดี๋ยวค่อยต่อ Register นะ')));
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
+    );
+    // ScaffoldMessenger.of(
+    //   context,
+    // ).showSnackBar(const SnackBar(content: Text('เดี๋ยวค่อยต่อ Register นะ')));
   }
 
   Future<void> _login() async {
@@ -287,7 +292,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const LotteryScreen()),
+            MaterialPageRoute(builder: (_) => LotteryScreen(uid: user['uid'])),
           );
         }
       } else {

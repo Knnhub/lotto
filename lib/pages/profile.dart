@@ -1,137 +1,140 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class Profile extends StatelessWidget {
-  const Profile({Key? key}) : super(key: key);
+class Profile extends StatefulWidget {
+  final int uid; // รับ uid ของผู้ใช้
+  const Profile({Key? key, required this.uid}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(primarySwatch: Colors.amber),
-      // กำหนดให้หน้า MainScreen เป็นหน้าแรก
-      home: const MainScreen(),
-    );
+  State<Profile> createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+
+  // ====================== ตั้งค่า Base URL ======================
+  // 👉 เปลี่ยนตรงนี้ตาม environment
+  final String baseUrl = "http://10.0.2.2:8080/api";
+  // Android Emulator = 10.0.2.2
+  // iOS Simulator = localhost
+  // มือถือจริง = IP LAN ของเครื่องรัน Go เช่น http://192.168.1.50:8080/api
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
   }
-}
 
-// --- Widget หลักสำหรับแสดงหน้า Profile ---
-class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  // ====================== ดึงข้อมูลผู้ใช้ ======================
+  Future<void> fetchUserData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user?uid=${widget.uid}'),
+      );
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        setState(() {
+          userData = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        print('Failed to load user: ${response.body}');
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      print('Error fetching user: $e');
+      setState(() => isLoading = false);
+    }
+  }
 
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  // ไม่ต้องมี _selectedIndex เพราะมีหน้าเดียวแล้ว
-  double _walletBalance = 1000.0;
-
-  // ฟังก์ชันแสดง Pop-up Top-up Wallet
+  // ====================== Top-up wallet ======================
   void _showTopUpDialog() {
     TextEditingController amountController = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          elevation: 0.0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(20.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(16.0),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10.0,
-                  offset: Offset(0.0, 10.0),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.amber,
-                  child: Icon(
-                    Icons.account_balance_wallet,
-                    color: Colors.white,
-                    size: 30,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircleAvatar(
+                radius: 30,
+                // backgroundColor: Colors.amber,
+                child: Icon(Icons.account_balance_wallet, color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Top Up Wallet',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter amount',
+                  labelText: 'Amount (Baht)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 16.0),
-                const Text(
-                  'Top Up Wallet',
-                  style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16.0),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Enter amount',
-                    labelText: 'Amount (Baht)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: const BorderSide(
-                        color: Colors.amber,
-                        width: 2.0,
-                      ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(width: 8.0),
-                    ElevatedButton(
-                      onPressed: () {
-                        double amount =
-                            double.tryParse(amountController.text) ?? 0.0;
-                        if (amount > 0) {
-                          setState(() => _walletBalance += amount);
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      int amount = int.tryParse(amountController.text) ?? 0;
+                      if (amount > 0) {
+                        final response = await http.post(
+                          Uri.parse('$baseUrl/wallet/topup'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: json.encode({
+                            'uid': widget.uid,
+                            'amount': amount,
+                          }),
+                        );
+                        print('Top-up response: ${response.body}');
+                        if (response.statusCode == 200) {
+                          await fetchUserData(); // รีเฟรชข้อมูล wallet
                         }
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      child: const Text(
-                        'Confirm',
-                        style: TextStyle(color: Colors.white),
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                    child: const Text(
+                      'Confirm',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  // ฟังก์ชันสร้างรายการเมนู
   Widget _buildMenuItem(IconData icon, String text, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.amber[800]),
@@ -145,27 +148,39 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // สร้างหน้า Profile
-  Widget _buildProfileScreen() {
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (userData == null) {
+      return const Scaffold(
+        body: Center(child: Text('ไม่สามารถโหลดข้อมูลได้')),
+      );
+    }
+
     return Scaffold(
       body: ListView(
         padding: EdgeInsets.zero,
-        children: <Widget>[
+        children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 60, 16, 32),
             color: Colors.amber,
-            child: const Column(
-              children: <Widget>[
+            child: Column(
+              children: [
                 CircleAvatar(
                   radius: 60,
                   backgroundImage: NetworkImage(
-                    'https://www.jokesforfunny.com/wp-content/uploads/2021/06/0596bdb89b60fe771acd2f5972a9d3e3-1158x1536.jpg',
+                    (userData!['avatar'] != null && userData!['avatar'] != "")
+                        ? userData!['avatar']
+                        : 'https://via.placeholder.com/150',
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'Mr. BOB EIEI',
-                  style: TextStyle(
+                  userData!['full_name'] ?? '',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -175,7 +190,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -189,14 +204,22 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 const SizedBox(height: 10),
                 Card(
-                  elevation: 2.0,
+                  elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     children: [
-                      _buildMenuItem(Icons.email, 'bobbob@gmail.com', () {}),
-                      _buildMenuItem(Icons.phone, '+66 81-234-5678', () {}),
+                      _buildMenuItem(
+                        Icons.email,
+                        userData!['email'] ?? '',
+                        () {},
+                      ),
+                      _buildMenuItem(
+                        Icons.phone,
+                        userData!['phone'] ?? '',
+                        () {},
+                      ),
                     ],
                   ),
                 ),
@@ -211,7 +234,7 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 const SizedBox(height: 10),
                 Card(
-                  elevation: 2.0,
+                  elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -219,25 +242,18 @@ class _MainScreenState extends State<MainScreen> {
                     children: [
                       _buildMenuItem(
                         Icons.credit_card,
-                        'Wallet: ${_walletBalance.toStringAsFixed(2)} บ.',
+                        'Wallet: ${userData!['wallet'] ?? 0} บ.',
                         _showTopUpDialog,
                       ),
                       _buildMenuItem(Icons.history, 'My Lottery', () {}),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // แสดงหน้า Profile เป็นหน้าหลักแทนการใช้ BottomNavigationBar
-    return _buildProfileScreen();
   }
 }
