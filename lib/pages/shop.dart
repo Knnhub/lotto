@@ -81,12 +81,16 @@ class _LotteryPageState extends State<Shop> {
     });
   }
 
-  void _confirmBuy(int number) async {
+  // =================ยืนยันการซื้อ=================
+
+  void _confirmBuy(UserGetLotteryRespones lot) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("ยืนยันการซื้อ"),
-        content: Text("คุณต้องการซื้อลอตเตอรี่เลข $number ใช่หรือไม่?"),
+        content: Text(
+          "คุณต้องการซื้อลอตเตอรี่เลข ${lot.number} ราคา ${lot.price} บาท ใช่หรือไม่?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -101,14 +105,63 @@ class _LotteryPageState extends State<Shop> {
     );
 
     if (ok == true) {
-      setState(() {
-        _purchasedNumbers.add(number);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("คุณซื้อเลข $number เรียบร้อยแล้ว")),
-      );
+      try {
+        // 🔹 สมมติว่าคุณเก็บ userId ไว้ใน session หรือ global state
+        final int userId = 1;
 
-      // TODO: ถ้าอยากให้ซื้อแล้ว update DB -> เรียก API POST/PUT ไปที่ Go server ที่นี่
+        // เรียก API เช็กยอดเงินผู้ใช้ก่อน
+        final balanceRes = await http.get(
+          Uri.parse('$u2/user/$userId/balance'),
+        );
+        if (balanceRes.statusCode != 200) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("โหลดยอดเงินไม่สำเร็จ")));
+          return;
+        }
+        final balance = json.decode(balanceRes.body)['balance'] as int;
+
+        if (balance < lot.price) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("❌ เงินไม่พอในการซื้อ")));
+          return;
+        }
+
+        // 🔹 เรียก API ซื้อ
+        final buyRes = await http.post(
+          Uri.parse('$u2/buy'),
+          headers: {"Content-Type": "application/json"},
+          body: json.encode({
+            "userId": userId,
+            "lotteryId": lot.lid,
+            "price": lot.price,
+          }),
+        );
+
+        if (buyRes.statusCode == 200) {
+          setState(() {
+            _purchasedNumbers.add(lot.number);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("🎉 คุณซื้อเลข ${lot.number} เรียบร้อยแล้ว"),
+            ),
+          );
+
+          // refresh list หลังซื้อ (จะได้เห็นว่ามี "ขายแล้ว")
+          _fetchLotteries();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("❌ ซื้อไม่สำเร็จ (${buyRes.statusCode})")),
+          );
+        }
+      } catch (e) {
+        print("❌ Error buying lottery: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("เกิดข้อผิดพลาดในการซื้อ")),
+        );
+      }
     }
   }
 
@@ -134,7 +187,9 @@ class _LotteryPageState extends State<Shop> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: bought ? null : () => _confirmBuy(lot.number),
+                  onPressed: bought || lot.lid == null
+                      ? null
+                      : () => _confirmBuy(lot),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: bought ? Colors.white70 : Colors.white,
                     disabledBackgroundColor: Colors.white70,

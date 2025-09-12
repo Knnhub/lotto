@@ -17,6 +17,7 @@ class UserGetLotteryRespones {
   int price;
   String status;
   String date;
+  int? lid;
   int userId;
 
   UserGetLotteryRespones({
@@ -24,16 +25,18 @@ class UserGetLotteryRespones {
     required this.price,
     required this.status,
     required this.date,
+    this.lid,
     required this.userId,
   });
 
   factory UserGetLotteryRespones.fromJson(Map<String, dynamic> json) =>
       UserGetLotteryRespones(
-        number: json["number"],
-        price: json["price"],
-        status: json["status"],
-        date: json["date"],
-        userId: json["user_id"],
+        number: json["number"] ?? 0,
+        price: json["price"] ?? 0,
+        status: json["status"] ?? '',
+        date: json["date"] ?? '',
+        lid: json["lid"], // null ได้
+        userId: json["user_id"] ?? 0, // null ได้
       );
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +44,7 @@ class UserGetLotteryRespones {
     "price": price,
     "status": status,
     "date": date,
+    "lid": lid,
     "user_id": userId,
   };
 }
