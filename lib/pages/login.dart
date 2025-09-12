@@ -285,12 +285,12 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
 
         if (role == 'ADMIN') {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AdminRanNum()),
           );
         } else {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => LotteryScreen(uid: user['uid'])),
           );

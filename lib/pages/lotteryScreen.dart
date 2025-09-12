@@ -20,7 +20,7 @@ class _LotteryScreenState extends State<LotteryScreen> {
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
       const LotteryScreenContent(), // index 0
-      const Shop(), // index 1
+      Shop(uid: widget.uid),
       Profile(uid: widget.uid), // index 2
       const Busget(), // index 3
     ];
