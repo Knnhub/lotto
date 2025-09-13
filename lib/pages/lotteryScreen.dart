@@ -18,51 +18,94 @@ class _LotteryScreenState extends State<LotteryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pages = [
+    final pages = <Widget>[
       const LotteryScreenContent(), // index 0
-      Shop(uid: widget.uid),
-      Profile(uid: widget.uid), // index 2
+      Shop(uid: widget.uid), // index 1
+      Profile(uid: widget.uid), // index 2 (ยังส่ง uid ตามเดิม)
       const Busget(), // index 3
     ];
 
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFFCC737),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        currentIndex:
-            _currentIndex, //currentIndex เป็นตัวบอกว่าตอนนี้เลือกเมนูไหน
-        onTap: (index) {
-          if (index == 4) {
-            // Logout
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          } else {
-            setState(() {
-              _currentIndex = index;
-            });
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: "Shop",
+      extendBody: true, // ให้เนื้อหาลื่นใต้แถบล่าง เงาดูเนียน
+      body: pages[_currentIndex],
+
+      // ===== แถบล่างแบบไม่มีช่องว่างสีขาว & มีอินดิเคเตอร์ชัดเจน =====
+      bottomNavigationBar: Material(
+        color: const Color(0xFFFCC737), // เติมสีทับ safe area ล่างให้หมด
+        elevation: 8,
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              backgroundColor: const Color(0xFFFCC737),
+              indicatorColor: Colors.white, // เม็ดไฮไลต์
+              surfaceTintColor: Colors.transparent, // กัน overlay เทา
+              iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+                (states) => IconThemeData(
+                  size: states.contains(WidgetState.selected) ? 26 : 24,
+                  color: Colors.black.withOpacity(
+                    states.contains(WidgetState.selected) ? 1 : 0.7,
+                  ),
+                ),
+              ),
+              labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+                (states) => TextStyle(
+                  fontWeight: states.contains(WidgetState.selected)
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            child: NavigationBar(
+              height: 64,
+              selectedIndex: _currentIndex,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              onDestinationSelected: (index) {
+                if (index == 4) {
+                  // Logout → กลับไปหน้าต้นทาง (ตามเดิม)
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  return;
+                }
+                setState(() => _currentIndex = index);
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.shopping_bag_outlined),
+                  selectedIcon: Icon(Icons.shopping_bag),
+                  label: 'Shop',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long),
+                  label: 'My Lottery',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.logout_outlined),
+                  selectedIcon: Icon(Icons.logout),
+                  label: 'Logout',
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: "My Lottery",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.logout), label: "Logout"),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// เหลือเฉพาะส่วนบน + คอนเทนเนอร์สีขาวด้านล่าง (ไม่มีการ์ดรายการแล้ว)
+/// เหลือเฉพาะส่วนบน + คอนเทนเนอร์สีขาวด้านล่าง (ไม่มีการ์ดรายการ)
 class LotteryScreenContent extends StatefulWidget {
   const LotteryScreenContent({super.key});
 
@@ -72,7 +115,6 @@ class LotteryScreenContent extends StatefulWidget {
 
 class _LotteryScreenContentState extends State<LotteryScreenContent> {
   Future<void> _onCheckPressed() async {
-    // ✅ ป๊อปอัพแสดงผลว่าถูกรางวัล
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -194,7 +236,7 @@ class _LotteryScreenContentState extends State<LotteryScreenContent> {
 
               const SizedBox(height: 30),
 
-              // คอนเทนเนอร์สีขาวด้านล่าง (เว้นพื้นที่ไว้ ไม่มีการ์ดรายการแล้ว)
+              // คอนเทนเนอร์สีขาวด้านล่าง
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
@@ -242,245 +284,41 @@ class _LotteryScreenContentState extends State<LotteryScreenContent> {
                       style: GoogleFonts.kanit(fontSize: 20),
                     ),
                     const SizedBox(height: 20),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // รางวัลที่ 2
-                        Column(
-                          children: [
-                            Container(
-                              width: 180,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFCC737),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                child: Text(
-                                  "รางวัลที่ 2",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.kanit(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 180,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(16),
-                                  bottomRight: Radius.circular(16),
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFFCC737),
-                                  width: 4,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "9 9 9 9 9 9",
-                                    style: GoogleFonts.kanit(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "2,000,000 บาท",
-                                    style: GoogleFonts.kanit(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        _prizeBox(
+                          title: "รางวัลที่ 2",
+                          number: "9 9 9 9 9 9",
+                          prize: "2,000,000 บาท",
                         ),
-                        // รางวัลที่ 3
-                        Column(
-                          children: [
-                            Container(
-                              width: 180,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFCC737),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                child: Text(
-                                  "รางวัลที่ 3",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.kanit(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 180,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(16),
-                                  bottomRight: Radius.circular(16),
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFFCC737),
-                                  width: 4,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "8 8 8 8 8 8",
-                                    style: GoogleFonts.kanit(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "1,000,000 บาท",
-                                    style: GoogleFonts.kanit(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        _prizeBox(
+                          title: "รางวัลที่ 3",
+                          number: "8 8 8 8 8 8",
+                          prize: "1,000,000 บาท",
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 20),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // เลขท้าย 3 ตัว
-                        Column(
-                          children: [
-                            Container(
-                              width: 180,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFCC737),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                child: Text(
-                                  "เลขท้าย 3 ตัว",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.kanit(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 180,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(16),
-                                  bottomRight: Radius.circular(16),
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFFCC737),
-                                  width: 4,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "9 9 9",
-                                    style: GoogleFonts.kanit(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "4,000 บาท",
-                                    style: GoogleFonts.kanit(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        _prizeBox(
+                          title: "เลขท้าย 3 ตัว",
+                          number: "9 9 9",
+                          prize: "4,000 บาท",
                         ),
-                        // เลขท้าย 2 ตัว
-                        Column(
-                          children: [
-                            Container(
-                              width: 180,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFCC737),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(16),
-                                  topRight: Radius.circular(16),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                                child: Text(
-                                  "เลขท้าย 2 ตัว",
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.kanit(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 180,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(16),
-                                  bottomRight: Radius.circular(16),
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFFCC737),
-                                  width: 4,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "9 9",
-                                    style: GoogleFonts.kanit(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "4,000 บาท",
-                                    style: GoogleFonts.kanit(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        _prizeBox(
+                          title: "เลขท้าย 2 ตัว",
+                          number: "9 9",
+                          prize: "4,000 บาท",
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -489,6 +327,61 @@ class _LotteryScreenContentState extends State<LotteryScreenContent> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _prizeBox({
+    required String title,
+    required String number,
+    required String prize,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: 180,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFCC737),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.kanit(fontSize: 16),
+            ),
+          ),
+        ),
+        Container(
+          width: 180,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            border: Border.all(color: const Color(0xFFFCC737), width: 4),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                number,
+                style: GoogleFonts.kanit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(prize, style: GoogleFonts.kanit(fontSize: 14)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
