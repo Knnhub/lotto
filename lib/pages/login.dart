@@ -7,7 +7,6 @@ import 'package:flutter_application_1/pages/register.dart';
 import 'package:flutter_application_1/pages/shop.dart'; // LotteryPage อยู่ในไฟล์นี้ตามโปรเจ็กต์เดิม
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_application_1/pages/random_lotto.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -287,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
         if (role == 'ADMIN') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const AdminRanNum()),
+            MaterialPageRoute(builder: (_) => AdminRanNum(uid: user['uid'])),
           );
         } else {
           Navigator.push(

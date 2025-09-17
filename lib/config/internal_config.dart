@@ -13,4 +13,4 @@
 //   return await Configuration.getApiEndpoint();
 // }
 
-String API_ENDPOINT = "http://10.34.10.189:8080/api";
+String API_ENDPOINT = "http://10.34.10.26:8080/api";

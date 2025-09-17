@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/config/config.dart';
+import 'package:flutter_application_1/model/respone/reward_get_res.dart';
 import 'package:flutter_application_1/pages/busget.dart';
-import 'package:flutter_application_1/pages/home_page.dart';
 import 'package:flutter_application_1/pages/profile.dart';
 import 'package:flutter_application_1/pages/shop.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 class LotteryScreen extends StatefulWidget {
   final int uid;
@@ -15,32 +17,66 @@ class LotteryScreen extends StatefulWidget {
 
 class _LotteryScreenState extends State<LotteryScreen> {
   int _currentIndex = 0;
+  String _apiEndpoint = '';
+  Future<List<RewardGetResponse>>? _rewardsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final config = await Configuration.getConfig();
+    setState(() {
+      _apiEndpoint = config['apiEndpoint'] ?? '';
+      _rewardsFuture = _fetchRewards();
+    });
+  }
+
+  Future<List<RewardGetResponse>> _fetchRewards() async {
+    final url = '$_apiEndpoint/reward/get';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return rewardGetResponseFromJson(response.body);
+    } else {
+      throw Exception("Failed to load rewards (${response.statusCode})");
+    }
+  }
+
+  void _onNavTapped(int index) {
+    if (index == 4) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const LotteryScreenContent(), // index 0
-      Shop(uid: widget.uid), // index 1
-      Profile(uid: widget.uid), // index 2 (ยังส่ง uid ตามเดิม)
-      const Busget(), // index 3
+      if (_rewardsFuture == null)
+        const Center(child: CircularProgressIndicator())
+      else
+        LotteryScreenContent(rewardsFuture: _rewardsFuture!),
+      Shop(uid: widget.uid),
+      Profile(uid: widget.uid),
+      MyLotteriesPage(userId: widget.uid),
     ];
 
     return Scaffold(
-      extendBody: true, // ให้เนื้อหาลื่นใต้แถบล่าง เงาดูเนียน
+      extendBody: true,
       body: pages[_currentIndex],
-
-      // ===== แถบล่างแบบไม่มีช่องว่างสีขาว & มีอินดิเคเตอร์ชัดเจน =====
       bottomNavigationBar: Material(
-        color: const Color(0xFFFCC737), // เติมสีทับ safe area ล่างให้หมด
+        color: const Color(0xFFFCC737),
         elevation: 8,
         child: SafeArea(
           top: false,
-          bottom: true,
           child: NavigationBarTheme(
             data: NavigationBarThemeData(
               backgroundColor: const Color(0xFFFCC737),
-              indicatorColor: Colors.white, // เม็ดไฮไลต์
-              surfaceTintColor: Colors.transparent, // กัน overlay เทา
+              indicatorColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
               iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
                 (states) => IconThemeData(
                   size: states.contains(WidgetState.selected) ? 26 : 24,
@@ -62,14 +98,7 @@ class _LotteryScreenState extends State<LotteryScreen> {
               height: 64,
               selectedIndex: _currentIndex,
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              onDestinationSelected: (index) {
-                if (index == 4) {
-                  // Logout → กลับไปหน้าต้นทาง (ตามเดิม)
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                  return;
-                }
-                setState(() => _currentIndex = index);
-              },
+              onDestinationSelected: _onNavTapped,
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.home_outlined),
@@ -105,16 +134,11 @@ class _LotteryScreenState extends State<LotteryScreen> {
   }
 }
 
-/// เหลือเฉพาะส่วนบน + คอนเทนเนอร์สีขาวด้านล่าง (ไม่มีการ์ดรายการ)
-class LotteryScreenContent extends StatefulWidget {
-  const LotteryScreenContent({super.key});
+class LotteryScreenContent extends StatelessWidget {
+  final Future<List<RewardGetResponse>> rewardsFuture;
+  const LotteryScreenContent({super.key, required this.rewardsFuture});
 
-  @override
-  State<LotteryScreenContent> createState() => _LotteryScreenContentState();
-}
-
-class _LotteryScreenContentState extends State<LotteryScreenContent> {
-  Future<void> _onCheckPressed() async {
+  Future<void> _onCheckPressed(BuildContext context) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -130,17 +154,14 @@ class _LotteryScreenContentState extends State<LotteryScreenContent> {
             ),
           ],
         ),
-        content: Text('คุณถูกรางวัล!', style: GoogleFonts.kanit(fontSize: 16)),
+        content: Text(
+          'ระบบตรวจเสร็จแล้ว (เดโม่)\n— ตรงนี้ใส่ผลจริงตามที่ต้องการได้',
+          style: GoogleFonts.kanit(),
+        ),
         actions: [
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFCC737),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+          TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('ปิด', style: GoogleFonts.kanit(color: Colors.black)),
+            child: Text('ปิด', style: GoogleFonts.kanit()),
           ),
         ],
       ),
@@ -149,239 +170,285 @@ class _LotteryScreenContentState extends State<LotteryScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFCC737),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 50),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ส่วนบน (หัวเรื่อง + งวด + กล่องเลขตัวอย่าง + ปุ่ม)
-              Center(
-                child: Container(
-                  width: 350,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+    final bottomPad = MediaQuery.of(context).padding.bottom + 96;
+
+    return SafeArea(
+      child: FutureBuilder<List<RewardGetResponse>>(
+        future: rewardsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'โหลดข้อมูลไม่สำเร็จ\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.kanit(fontSize: 16),
+                ),
+              ),
+            );
+          }
+
+          final rewards = snapshot.data ?? const <RewardGetResponse>[];
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ตรวจผลสลาก
+                Container(
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xFFFFF3CC),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Text(
-                          "ตรวจผลสลาก",
-                          style: GoogleFonts.kanit(
-                            fontSize: 24,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       Text(
-                        "งวดวันที่ 1 สิงหาคม 2568",
+                        'ตรวจผลสลาก',
                         style: GoogleFonts.kanit(
-                          fontSize: 16,
-                          color: Colors.black,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(6, (_) {
-                          return Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFCC737),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "1",
-                              style: GoogleFonts.kanit(fontSize: 20),
-                            ),
-                          );
-                        }),
+                      const SizedBox(height: 6),
+                      Text(
+                        'งวดวันที่ 1 สิงหาคม 2568',
+                        style: GoogleFonts.kanit(color: Colors.black54),
                       ),
                       const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: _onCheckPressed,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFFCC737),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 50,
-                            vertical: 10,
-                          ),
-                        ),
-                        child: Text(
-                          "ตรวจสลากของคุณ",
-                          style: GoogleFonts.kanit(
-                            fontSize: 17,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: List.generate(
+                          6,
+                          (i) => Container(
+                            width: 44,
+                            height: 44,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFCC737),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '1',
+                              style: GoogleFonts.kanit(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFCC737),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () => _onCheckPressed(context),
+                          child: Text(
+                            'ตรวจสลากของคุณ',
+                            style: GoogleFonts.kanit(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // คอนเทนเนอร์สีขาวด้านล่าง
-              Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    topRight: Radius.circular(50),
-                  ),
+                const SizedBox(height: 18),
+                // รางวัลที่ 1 (ตัวอย่าง)
+                _PrizeSection(
+                  title: 'รางวัลที่ 1',
+                  numberBoxes: const ['4', '5', '1', '4', '4', '0'],
+                  prizeText: '6,000,000 บาท',
                 ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: Text(
-                        "รางวัลที่ 1",
-                        style: GoogleFonts.kanit(
-                          fontSize: 24,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                const SizedBox(height: 12),
+                // รางวัลอื่น ๆ แบบ grid
+                GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                  ),
+                  children: const [
+                    _MiniPrizeCard(
+                      title: 'รางวัลที่ 2',
+                      number: '769601',
+                      prize: '200,000 บาท',
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(6, (_) {
-                        return Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFCC737),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            "1",
-                            style: GoogleFonts.kanit(fontSize: 30),
-                          ),
-                        );
-                      }),
+                    _MiniPrizeCard(
+                      title: 'รางวัลที่ 3',
+                      number: '390356',
+                      prize: '80,000 บาท',
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "6,000,000 บาท",
-                      style: GoogleFonts.kanit(fontSize: 20),
+                    _MiniPrizeCard(
+                      title: 'เลขท้าย 2 ตัว',
+                      number: '66',
+                      prize: '2,000 บาท',
                     ),
-                    const SizedBox(height: 20),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _prizeBox(
-                          title: "รางวัลที่ 2",
-                          number: "9 9 9 9 9 9",
-                          prize: "2,000,000 บาท",
-                        ),
-                        _prizeBox(
-                          title: "รางวัลที่ 3",
-                          number: "8 8 8 8 8 8",
-                          prize: "1,000,000 บาท",
-                        ),
-                      ],
+                    _MiniPrizeCard(
+                      title: 'เลขท้าย 3 ตัว',
+                      number: '348',
+                      prize: '4,000 บาท',
                     ),
-
-                    const SizedBox(height: 20),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _prizeBox(
-                          title: "เลขท้าย 3 ตัว",
-                          number: "9 9 9",
-                          prize: "4,000 บาท",
-                        ),
-                        _prizeBox(
-                          title: "เลขท้าย 2 ตัว",
-                          number: "9 9",
-                          prize: "4,000 บาท",
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 40),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _prizeBox({
-    required String title,
-    required String number,
-    required String prize,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 180,
-          decoration: const BoxDecoration(
-            color: Color(0xFFFCC737),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
+class _PrizeSection extends StatelessWidget {
+  final String title;
+  final List<String> numberBoxes;
+  final String prizeText;
+  const _PrizeSection({
+    required this.title,
+    required this.numberBoxes,
+    required this.prizeText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.kanit(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: numberBoxes
+                .map(
+                  (n) => Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCC737),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      n,
+                      style: GoogleFonts.kanit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          FittedBox(
+            child: Text(
+              prizeText,
+              style: GoogleFonts.kanit(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniPrizeCard extends StatelessWidget {
+  final String title;
+  final String number;
+  final String prize;
+  const _MiniPrizeCard({
+    required this.title,
+    required this.number,
+    required this.prize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FittedBox(
             child: Text(
               title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.kanit(fontSize: 16),
+              style: GoogleFonts.kanit(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
-        Container(
-          width: 180,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-            ),
-            border: Border.all(color: const Color(0xFFFCC737), width: 4),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                number,
-                style: GoogleFonts.kanit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          const SizedBox(height: 6),
+          Expanded(
+            child: Center(
+              child: FittedBox(
+                child: Text(
+                  number,
+                  style: GoogleFonts.kanit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(prize, style: GoogleFonts.kanit(fontSize: 14)),
-            ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          FittedBox(
+            child: Text(prize, style: GoogleFonts.kanit(color: Colors.black87)),
+          ),
+        ],
+      ),
     );
   }
 }

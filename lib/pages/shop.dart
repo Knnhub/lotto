@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'lottery.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_1/model/respone/reward_get_res.dart';
 
 // หน้าหลักสำหรับการค้นหาสลาก
 class Shop extends StatefulWidget {
@@ -13,11 +14,11 @@ class Shop extends StatefulWidget {
   const Shop({super.key, required this.uid});
 
   @override
-  State<Shop> createState() => _LotteryPageState();
+  State<Shop> createState() => _ShopState();
 }
 
-class _LotteryPageState extends State<Shop> {
-  String u2 = '';
+class _ShopState extends State<Shop> {
+  String apiEndpoint = '';
   final TextEditingController _searchController = TextEditingController();
   final Set<int> _purchasedNumbers = {};
 
@@ -29,14 +30,15 @@ class _LotteryPageState extends State<Shop> {
     super.initState();
     Configuration.getConfig().then((config) {
       setState(() {
-        u2 = config['apiEndpoint'];
+        apiEndpoint = config['apiEndpoint'];
       });
       _fetchLotteries();
     });
   }
 
+  // ดึงรายการลอตเตอรี่จาก API
   Future<void> _fetchLotteries() async {
-    final url = Uri.parse('$u2/lottery');
+    final url = Uri.parse('$apiEndpoint/lottery');
     try {
       final res = await http.get(url);
       if (res.statusCode == 200) {
@@ -58,6 +60,7 @@ class _LotteryPageState extends State<Shop> {
     }
   }
 
+  // ค้นหาลอตเตอรี่
   void _searchLottery() {
     final raw = _searchController.text.trim();
     setState(() {
@@ -71,6 +74,7 @@ class _LotteryPageState extends State<Shop> {
     });
   }
 
+  // ฟังก์ชันยืนยันการซื้อ
   void _confirmBuy(UserGetLotteryRespones lot) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -107,51 +111,36 @@ class _LotteryPageState extends State<Shop> {
       ),
     );
 
-    if (ok != true) {
-      debugPrint("🚫 User cancelled buy dialog");
-      return;
-    }
+    if (ok != true) return;
 
     try {
       final int userId = widget.uid;
-      final uri = Uri.parse('$u2/user?uid=$userId');
+      final balanceUri = Uri.parse('$apiEndpoint/user?uid=$userId');
 
-      final balanceRes = await http.get(uri);
-      debugPrint("📡 GET $uri => ${balanceRes.statusCode}");
-
-      if (balanceRes.statusCode == 404) {
-        debugPrint("❌ User not found: uid=$userId");
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("❌ ไม่พบผู้ใช้")));
-        return;
-      }
-
+      // ตรวจสอบยอดเงิน
+      final balanceRes = await http.get(balanceUri);
       if (balanceRes.statusCode != 200) {
-        debugPrint("❌ Failed to load balance: ${balanceRes.body}");
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("โหลดยอดเงินไม่สำเร็จ")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("❌ ไม่สามารถตรวจสอบยอดเงินได้")),
+        );
         return;
       }
 
       final data = json.decode(balanceRes.body);
       final balance = data['wallet'] as int;
-      debugPrint("💰 Current balance: $balance");
 
       if (balance < lot.price) {
-        debugPrint("❌ Balance not enough: need ${lot.price}, have $balance");
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("❌ เงินไม่พอในการซื้อ")));
         return;
       }
 
+      // ซื้อสลาก
       final payload = {"userId": userId, "lotteryId": lot.lid};
-      debugPrint("📡 Request buy: $u2/buy with $payload");
-
+      //ดึง API ซื้อสลาก
       final buyRes = await http.post(
-        Uri.parse('$u2/buy'),
+        Uri.parse('$apiEndpoint/buy'),
         headers: {"Content-Type": "application/json"},
         body: json.encode(payload),
       );
@@ -161,14 +150,13 @@ class _LotteryPageState extends State<Shop> {
           _purchasedNumbers.add(lot.number);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("🎉 คุณซื้อเลข ${lot.number} เรียบร้อยแล้วจ้า"),
-          ),
+          SnackBar(content: Text("🎉 คุณซื้อเลข ${lot.number} สำเร็จ")),
         );
         _fetchLotteries();
       } else {
+        final err = json.decode(buyRes.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ ซื้อไม่สำเร็จ (${buyRes.statusCode})")),
+          SnackBar(content: Text("❌ ${err['error'] ?? 'ซื้อไม่สำเร็จ'}")),
         );
       }
     } catch (e) {
@@ -179,8 +167,10 @@ class _LotteryPageState extends State<Shop> {
     }
   }
 
+  // การ์ดแสดงลอตเตอรี่
   Widget _buildLotteryCard(UserGetLotteryRespones lot) {
     final bool bought = _purchasedNumbers.contains(lot.number);
+    final bool sold = lot.status == "ขายแล้ว"; // ✅ เช็คสถานะจาก API
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
@@ -201,22 +191,20 @@ class _LotteryPageState extends State<Shop> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: bought || lot.lid == null
-                      ? null
-                      : () => _confirmBuy(lot),
+                  onPressed: (bought || sold) ? null : () => _confirmBuy(lot),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: bought ? Colors.white70 : Colors.white,
+                    backgroundColor: (bought || sold)
+                        ? Colors.white70
+                        : Colors.white,
                     disabledBackgroundColor: Colors.white70,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
                   ),
                   child: Text(
-                    bought ? 'ซื้อแล้ว' : 'ซื้อล็อตเตอรี่',
+                    sold
+                        ? 'ขายแล้ว' // ✅ ถ้า status เป็นขายแล้ว
+                        : (bought ? 'ซื้อแล้ว' : 'ซื้อลอตเตอรี่'),
                     style: GoogleFonts.kanit(
                       fontSize: 14,
                       color: Colors.black,
@@ -266,6 +254,7 @@ class _LotteryPageState extends State<Shop> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ช่องค้นหา
             Padding(
               padding: const EdgeInsets.only(top: 20, left: 16, right: 16),
               child: Center(
@@ -277,15 +266,14 @@ class _LotteryPageState extends State<Shop> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 20),
                       Text(
-                        "ซื้อล็อตเตอรี่",
+                        "ซื้อลอตเตอรี่",
                         style: GoogleFonts.kanit(
                           fontSize: 24,
-                          color: Colors.black,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -298,11 +286,6 @@ class _LotteryPageState extends State<Shop> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           prefixIcon: const Icon(Icons.search),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
                         ),
                         onChanged: (_) => _searchLottery(),
                       ),
@@ -320,11 +303,11 @@ class _LotteryPageState extends State<Shop> {
                           ),
                         ),
                         child: Text(
-                          "ค้นหาล็อตเตอรี่",
+                          "ค้นหาลอตเตอรี่",
                           style: GoogleFonts.kanit(
                             fontSize: 17,
-                            color: Colors.black,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -335,6 +318,7 @@ class _LotteryPageState extends State<Shop> {
               ),
             ),
             const SizedBox(height: 30),
+            // รายการลอตเตอรี่
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -345,10 +329,7 @@ class _LotteryPageState extends State<Shop> {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 16,
-                  ),
+                  padding: const EdgeInsets.all(16),
                   child: _searchResults.isEmpty
                       ? Center(
                           child: Text(
